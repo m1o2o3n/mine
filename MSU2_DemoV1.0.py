@@ -762,42 +762,26 @@ def show_Photo1():#显示照片
     if(State_change==0):
         time.sleep(0.5)
     
-def LCD_Clear(LCD_Color):#纯色清屏
-    LCD_ADD(0,0,240,240)
-    color_h=LCD_Color//256
-    color_l=LCD_Color%256
-    block=bytearray()
-    for i in range(0,128):#每次发送128个像素(256字节)
-        block.append(color_h)
-        block.append(color_l)
-    total_size=240*240*2
-    for i in range(0,total_size//256):
-        LCD_DATA(block,256)
-    if(total_size%256!=0):
-        last=bytearray(block)
-        LCD_DATA(last,total_size%256)
-
 def show_PC_time():
     global State_change
-    FC=WHITE
-    BC=BLUE
+    FC=YELLOW
+    photo_add=450*7
     num_add=3651
-    clock_y=8
     if(State_change==1):
         State_change=0
-        LCD_Clear(BC)#蓝色背景
-        LCD_ASCII_32X64(72,clock_y,':',FC,BC,num_add)
-        LCD_ASCII_32X64(152,clock_y,':',FC,BC,num_add)
+        LCD_Photo(0,0,240,240,photo_add)#放置背景
+        LCD_ASCII_32X64_MIX(56+8,32,':',FC,photo_add,num_add)
+        LCD_ASCII_32X64_MIX(136+8,32,':',FC,photo_add,num_add)
     if(State_change==0):
         time_h=int(datetime.now().hour)
         time_m=int(datetime.now().minute)
         time_S=int(datetime.now().second)
-        LCD_ASCII_32X64(8,clock_y,chr((time_h//10)+48),FC,BC,num_add)
-        LCD_ASCII_32X64(40,clock_y,chr((time_h%10)+48),FC,BC,num_add)
-        LCD_ASCII_32X64(88,clock_y,chr((time_m//10)+48),FC,BC,num_add)
-        LCD_ASCII_32X64(120,clock_y,chr((time_m%10)+48),FC,BC,num_add)
-        LCD_ASCII_32X64(168,clock_y,chr((time_S//10)+48),FC,BC,num_add)
-        LCD_ASCII_32X64(200,clock_y,chr((time_S%10)+48),FC,BC,num_add)
+        LCD_ASCII_32X64_MIX(0+8,32,chr((time_h//10)+48),FC,photo_add,num_add)
+        LCD_ASCII_32X64_MIX(32+8,32,chr((time_h%10)+48),FC,photo_add,num_add)
+        LCD_ASCII_32X64_MIX(80+8,32,chr((time_m//10)+48),FC,photo_add,num_add)
+        LCD_ASCII_32X64_MIX(112+8,32,chr((time_m%10)+48),FC,photo_add,num_add)
+        LCD_ASCII_32X64_MIX(160+8,32,chr((time_S//10)+48),FC,photo_add,num_add)
+        LCD_ASCII_32X64_MIX(192+8,32,chr((time_S%10)+48),FC,photo_add,num_add)
         time.sleep(0.2)
 print("该设备具有"+str(psutil.cpu_count(logical=False))+"个内核和"+str(psutil.cpu_count())+"个逻辑处理器")
 print("该CPU主频为"+str(round((psutil.cpu_freq().current/1000),1))+"GHZ")
