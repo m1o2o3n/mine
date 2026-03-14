@@ -783,18 +783,17 @@ def show_PC_time():
     BC=BLUE
     num_add=3651
     clock_y=8
-    x_pos=[8,40,88,120,168,200]
-    now_digits=datetime.now().strftime('%H%M%S')
+    x_pos=[40,72,120,152]
+    now_digits=datetime.now().strftime('%H%M')
     if(State_change==1):
         State_change=0
         last_clock_digits=''
         LCD_Clear(BC)#蓝色背景
-        LCD_ASCII_32X64(72,clock_y,':',FC,BC,num_add)
-        LCD_ASCII_32X64(152,clock_y,':',FC,BC,num_add)
+        LCD_ASCII_32X64(104,clock_y,':',FC,BC,num_add)
     if(State_change==0):
         if(now_digits!=last_clock_digits):
-            for i in range(0,6):
-                if(len(last_clock_digits)!=6 or now_digits[i]!=last_clock_digits[i]):
+            for i in range(0,4):
+                if(len(last_clock_digits)!=4 or now_digits[i]!=last_clock_digits[i]):
                     LCD_ASCII_32X64(x_pos[i],clock_y,now_digits[i],FC,BC,num_add)
             last_clock_digits=now_digits
         time.sleep(0.03)
