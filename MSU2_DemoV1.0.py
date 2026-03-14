@@ -5,7 +5,6 @@ import time#引入延时库
 import threading#引入定时回调库
 import psutil #引入psutil获取设备信息（需要额外安装）
 import os#用于读取文件
-import pyautogui#用于截图(需要额外安装pillow)
 from datetime import datetime#用于获取当前时间
 
 class MSN_Device:#定义一个结构体
@@ -36,13 +35,6 @@ GRAY1=0x8410
 GRAY2=0x4208
 
 hex_code=b''
-
-G_screnn0=bytearray()#空数组
-G_screnn1=bytearray()#空数组
-G_screnn0_OK=0
-G_screnn1_OK=0
-size_USE_X1=0
-size_USE_Y1=0
 
 def Read_M_u8(add):#读取主机u8寄存器（MSC设备编码，Add）
     hex_use=int(0).to_bytes(1,byteorder="little")#发给主机
@@ -791,135 +783,6 @@ def show_PC_time():
         LCD_ASCII_32X64_MIX(160+8,32,chr((time_S//10)+48),FC,photo_add,num_add)
         LCD_ASCII_32X64_MIX(192+8,32,chr((time_S%10)+48),FC,photo_add,num_add)
         time.sleep(0.2)
-def Screen_Date_Process(Photo_data):#对数据进行转换处理
-    Photo_data_use=Photo_data
-    hex_use=bytearray()#空数组
-    for j in range(0,size_USE_X1*size_USE_Y1*2//256):#每次写入一个Page
-        data_w=Photo_data_use[:256]
-        Photo_data_use=Photo_data_use[256:]
-        cmp_use=[]#空数组,
-        for i in range(0,64):#256字节数据分为64个指令
-            cmp_use.append(data_w[i*4+0]*256*256*256+data_w[i*4+1]*256*256+data_w[i*4+2]*256+data_w[i*4+3])
-        result=max(set(cmp_use),key=cmp_use.count)#统计出现最多的数据
-        hex_use.append(2)
-        hex_use.append(4)
-        color_ram=result
-        hex_use.append(color_ram//(256*256*256))
-        color_ram=color_ram%(256*256*256)
-        hex_use.append(color_ram//(256*256))
-        color_ram=color_ram%(256*256)
-        hex_use.append(color_ram//256)
-        hex_use.append(color_ram%256)
-        #先把数据格式转换好
-        for i in range(0,64):#256字节数据分为64个指令
-            if((data_w[i*4+0]*256*256*256+data_w[i*4+1]*256*256+data_w[i*4+2]*256+data_w[i*4+3])!=result):#
-                hex_use.append(4)
-                hex_use.append(i)
-                hex_use.append(data_w[i*4+0])
-                hex_use.append(data_w[i*4+1])
-                hex_use.append(data_w[i*4+2])
-                hex_use.append(data_w[i*4+3])
-        hex_use.append(2)
-        hex_use.append(3)
-        hex_use.append(8)
-        hex_use.append(1)
-        hex_use.append(0)
-        hex_use.append(0)
-    if(size_USE_X1*size_USE_Y1*2%256 !=0):#还存在没写完的数据
-        data_w=Photo_data_use#将剩下的数据读完
-        for i in range(size_USE_X1*size_USE_Y1*2%256,256):
-            data_w.append(0xff)#不足位置补充0xFF
-        for i in range(0,64):#256字节数据分为64个指令
-            hex_use.append(4)
-            hex_use.append(i)
-            hex_use.append(data_w[i*4+0])
-            hex_use.append(data_w[i*4+1])
-            hex_use.append(data_w[i*4+2])
-            hex_use.append(data_w[i*4+3])
-        hex_use.append(2)
-        hex_use.append(3)
-        hex_use.append(8)
-        hex_use.append(0)
-        hex_use.append(size_USE_X1*size_USE_Y1*2%256)
-        hex_use.append(0)
-    return hex_use
-
-#创建两个数据缓存区，防止冲突
-def Screen_Date_get():#创建专门的函数来获取屏幕图像和处理转换数据
-    global G_screnn0_OK,G_screnn1_OK,G_screnn0,G_screnn1,size_USE_X1,size_USE_Y1
-    print("截图线程创建成功")
-    size_PC=pyautogui.size()
-    size_mode=1
-    if(size_mode==0):#横向充满
-        if(size_PC.width>=size_PC.height):
-            size_USE_X1=240
-            size_USE_Y1=240*size_PC.height//size_PC.width
-        else:
-            size_USE_X1=240
-            size_USE_Y1=240
-    elif(size_mode==1):#纵向充满
-        if(size_PC.height>=size_PC.width):
-            size_USE_X1=240*size_PC.width//size_PC.height
-            size_USE_Y1=240
-        else:
-            size_USE_X1=240
-            size_USE_Y1=240
-    elif(size_mode==2):#拉伸充满
-        size_USE_X1=240
-        size_USE_Y1=240
-    while(1):
-        if(G_screnn0_OK==0 or G_screnn1_OK==0):
-            hex_16RGB=bytearray()#空数组
-            im=pyautogui.screenshot()#截屏需要110ms太慢了
-            u_time1=time.time()
-            if(size_mode==0):#横向充满
-                if(size_PC.width>=size_PC.height):
-                    im1=im.resize((size_USE_X1,size_USE_Y1))#进行缩放
-                else:
-                    im1=im.resize((240,240*size_PC.height//size_PC.width))#进行缩放                
-                    im1=im1.crop((0,(240*size_PC.height//size_PC.width-240)//2,240,(240*size_PC.height//size_PC.width-240)//2+240))#进行中心裁剪#进行中心裁剪
-            elif(size_mode==1):#纵向充满
-                if(size_PC.height>=size_PC.width):
-                    im1=im.resize((size_USE_X1,size_USE_Y1))#进行缩放
-                else:
-                    im1=im.resize((240*size_PC.width//size_PC.height,240))#进行缩放      
-                    im1=im1.crop(((240*size_PC.width//size_PC.height-240)//2,0,(240*size_PC.width//size_PC.height-240)//2+240,240))#进行中心裁剪
-            elif(size_mode==2):#拉伸充满
-                im1=im.resize((size_USE_X1,size_USE_Y1))#进行缩放
-            im2=im1.load()#直接将内存的数组加载出来处理
-            for y in range(0,size_USE_Y1):
-                for x in range(0,size_USE_X1):
-                    hex_16RGB.append((im2[x,y][0]//8)*8+im2[x,y][1]//32)
-                    hex_16RGB.append(((im2[x,y][1]%32)//4)*32+im2[x,y][2]//8)
-            if(G_screnn0_OK==0):
-                G_screnn0=Screen_Date_Process(hex_16RGB)
-                G_screnn0_OK=1
-            elif(G_screnn1_OK==0):
-                G_screnn1=Screen_Date_Process(hex_16RGB)
-                G_screnn1_OK=1
-            u_time1=time.time()-u_time1
-            u_time=time.time()
-        time.sleep(0.001)
-
-def show_PC_Screen():#显示照片
-    global State_change
-    global G_screnn0_OK,G_screnn1_OK,G_screnn0,G_screnn1,size_USE_X1,size_USE_Y1
-    if(State_change==1):
-        State_change=0
-    if(State_change==0):
-        if(G_screnn0_OK==1 or G_screnn1_OK==1):
-            u_time=time.time()
-            if(G_screnn0_OK==1):
-                LCD_ADD((240-size_USE_X1)//2,(240-size_USE_Y1)//2,size_USE_X1,size_USE_Y1)
-                ser.write(G_screnn0)
-                G_screnn0_OK=0
-            elif(G_screnn1_OK==1):
-                LCD_ADD((240-size_USE_X1)//2,(240-size_USE_Y1)//2,size_USE_X1,size_USE_Y1)
-                ser.write(G_screnn1)
-                G_screnn1_OK=0
-            u_time=time.time()-u_time
-        time.sleep(0.001)
-
 print("该设备具有"+str(psutil.cpu_count(logical=False))+"个内核和"+str(psutil.cpu_count())+"个逻辑处理器")
 print("该CPU主频为"+str(round((psutil.cpu_freq().current/1000),1))+"GHZ")
 print("当前CPU占用率为"+str(psutil.cpu_percent())+"%")#并不准确
@@ -976,13 +839,6 @@ else:#对串口进行监听，确保其为MSN设备
     Print_MSN_Data()#解析字节中的数据格式
     MSN_Status=Read_MSN_Data(b'MSN_Status')
     MSN_Status=Read_MSN_Data(b'MSN_UID')
-    try:#尝试建立屏幕截屏线程
-    
-        Thread1=threading.Thread(target=Screen_Date_get)
-        Thread1.start()
-    except:
-        print("警告,无法创建截图线程")
-    
     #将电脑端文件烧录到MSU2的1MB Flash(出厂时已烧录，后续可以根据需要进行修改)
     #Write_Flash_Photo_fast(45*0,'1')#240*240分辨率彩色图片，占用450个Page
     #Write_Flash_Photo_fast(450*1,'2')#240*240分辨率彩色图片，占用450个Page
@@ -998,45 +854,10 @@ else:#对串口进行监听，确保其为MSN设备
     #Write_Flash_Photo_fast(3779,'logo')#240*102单色LOGO,占用12个Page
     #Write_Flash_Photo_fast(3791,'J1')#240*240单色图片，占用29个Page
 
-    CPU=0
-    FC=BLUE
-    BC=BLACK
-    key_on=0
-    key_eff=0
-    State_machine=1#定义初始状态
-    timer1.start()#开启计时
-    ADC_det=Read_ADC_CH(9)
-    ADC_det=(ADC_det+Read_ADC_CH(9))/2
-    ADC_det=ADC_det-125#根据125的阈值判断是否被按下
-    #状态机检测和切换
+    # 固定显示当前时间（通过串口发送显示指令到设备）
+    State_change=1
     while(1):
-        if(time_out==1):
-            time_out=0
-            if(Read_ADC_CH(9)<ADC_det):#按键按下
-                key_on=1
-            elif(key_on==1):
-                key_eff=1
-                key_on=0
-            else:
-                key_on=0
-        if(key_eff==1):
-            key_eff=0
-            State_machine=State_machine+1
-            if(State_machine>5):
-                State_machine=0
-            State_change=1
-        if(State_machine==0):
-            show_gif()
-        elif(State_machine==1):
-            show_PC_state(BLUE,BLACK)
-        elif(State_machine==2):
-            show_PC_state(RED,BLACK)
-        elif(State_machine==3):
-            show_Photo1()
-        elif(State_machine==4):
-            show_PC_time()
-        elif(State_machine==5):
-            show_PC_Screen()
+        show_PC_time()
             
             
  
