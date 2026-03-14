@@ -33,7 +33,6 @@ YELLOW=0xFFE0
 GRAY0=0xEF7D
 GRAY1=0x8410
 GRAY2=0x4208
-LIGHT_BLUE=0xAEDC
 
 hex_code=b''
 
@@ -780,13 +779,13 @@ def LCD_Clear(LCD_Color):#纯色清屏
 
 def show_PC_time():
     global State_change
-    FC=BLUE
-    BC=LIGHT_BLUE
+    FC=WHITE
+    BC=BLUE
     num_add=3651
     clock_y=8
     if(State_change==1):
         State_change=0
-        LCD_Clear(BC)#淡蓝色背景
+        LCD_Clear(BC)#蓝色背景
         LCD_ASCII_32X64(72,clock_y,':',FC,BC,num_add)
         LCD_ASCII_32X64(152,clock_y,':',FC,BC,num_add)
     if(State_change==0):
